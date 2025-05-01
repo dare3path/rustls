@@ -387,13 +387,24 @@ impl KeyType {
         let private_key = provider::default_provider()
             .key_provider
             .load_private_key(self.get_client_key())?;
-        let public_key = private_key
-            .public_key()
-            .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
-        let public_key_as_cert = CertificateDer::from(public_key.to_vec());
+//        let public_key = private_key
+//            .public_key()
+//            .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
+//        let public_key_as_cert = CertificateDer::from(public_key.to_vec());
+//        Ok(Arc::new(CertifiedKey::new(
+//            vec![public_key_as_cert],
+//            private_key,
+//        )))
+        // Create a new scope to limit the borrow
+        let public_key_as_cert = {
+            let public_key = private_key
+                .public_key()
+                .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
+            CertificateDer::from(public_key.to_vec())
+        };
         Ok(Arc::new(CertifiedKey::new(
-            vec![public_key_as_cert],
-            private_key,
+                    vec![public_key_as_cert],
+                    private_key,
         )))
     }
 
@@ -401,13 +412,24 @@ impl KeyType {
         let private_key = provider::default_provider()
             .key_provider
             .load_private_key(self.get_key())?;
-        let public_key = private_key
-            .public_key()
-            .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
-        let public_key_as_cert = CertificateDer::from(public_key.to_vec());
+//        let public_key = private_key
+//            .public_key()
+//            .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
+//        let public_key_as_cert = CertificateDer::from(public_key.to_vec());
+//        Ok(Arc::new(CertifiedKey::new(
+//            vec![public_key_as_cert],
+//            private_key,
+//        )))
+        // Create a new scope to limit the borrow
+        let public_key_as_cert = {
+            let public_key = private_key
+                .public_key()
+                .ok_or(Error::InconsistentKeys(InconsistentKeys::Unknown))?;
+            CertificateDer::from(public_key.to_vec())
+        };
         Ok(Arc::new(CertifiedKey::new(
-            vec![public_key_as_cert],
-            private_key,
+                    vec![public_key_as_cert],
+                    private_key,
         )))
     }
 
@@ -529,14 +551,15 @@ pub fn get_client_root_store(kt: KeyType) -> Arc<RootCertStore> {
     // and the root trust anchor. We want only the trust anchor to build the root cert store.
     let chain = kt.get_chain();
     let trust_anchor = chain.last().unwrap();
-    RootCertStore {
+    let x=RootCertStore {
         roots: vec![
             anchor_from_trusted_cert(trust_anchor)
                 .unwrap()
                 .to_owned(),
         ],
     }
-    .into()
+    .into();
+    x
 }
 
 pub fn make_server_config_with_mandatory_client_auth_crls(

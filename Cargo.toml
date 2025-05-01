@@ -71,12 +71,12 @@ once_cell = { version = "1.16", default-features = false, features = ["alloc", "
 openssl = "0.10"
 p256 = { version = "0.13.2", default-features = false, features = ["alloc", "ecdsa", "pkcs8"] }
 pkcs8 = "0.10.2"
-pki-types = { package = "rustls-pki-types", version = "1.11", features = ["alloc"] }
+pki-types = { package = "rustls-pki-types", version = "1.11", features = ["alloc","trace_drop_and_zeroize"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 rayon = "1.7"
-rcgen = { version = "0.13", features = ["pem", "aws_lc_rs"], default-features = false }
+rcgen = { version = "0.14", features = ["pem", "aws_lc_rs"], default-features = false }
 regex = "1"
-ring = "0.17"
+ring = { version= "0.17", features = ["alloc","trace_drop_and_zeroize"] }
 rsa = { version = "0.9", features = ["sha2"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -96,3 +96,22 @@ zlib-rs = "0.5"
 [profile.bench]
 codegen-units = 1
 lto = true
+
+[patch.crates-io]
+rustls-pki-types = { path = "/home/user/SOURCE/github/modified_forks/pki-types" } #patched with ./zeroize_on_drop.patch
+#XXX: if you're not me, you'll want this instead (or clone this locally in a path and change the path above to reflect where u've cloned it):
+#rustls-pki-types = { git = "https://github.com/dare3path/pki-types", branch="zeroize_on_drop" }
+
+#patched to not obscure connection errors behind ChannelClosed: (not used in rustls at all)
+#hyper-util = { path ="/home/user/SOURCE/my/channelclosed.reqwest/hyper-util" }
+
+# patched to zeroize private keys on drop:
+ring = { path = "/home/user/SOURCE/github/modified_forks/ring" }
+#XXX: if you're not me, you'll want this instead (or clone this locally in a path and change the path above to reflect where u've cloned it):
+#ring = { git="https://github.com/dare3path/ring", branch="zeroize_on_drop" }
+
+#This is my rcgen fork from branch fixes_due_to_Drop_impls_in_dep_crates
+rcgen = { path = "/home/user/SOURCE/github/modified_forks/rcgen/rcgen" }
+#XXX: if you're not me, you'll want this instead (or clone this locally in a path and change the path above to reflect where u've cloned it):
+#rcgen = { git = "https://github.com/dare3path/rcgen", branch="fixes_due_to_Drop_impls_in_dep_crates" }
+

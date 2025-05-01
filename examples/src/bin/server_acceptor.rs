@@ -110,9 +110,11 @@ fn main() {
 /// A test PKI with a CA certificate, server certificate, and client certificate.
 struct TestPki {
     roots: Arc<RootCertStore>,
-    ca_cert: rcgen::CertifiedKey,
-    client_cert: rcgen::CertifiedKey,
-    server_cert: rcgen::CertifiedKey,
+    ca_params: rcgen::CertificateParams,
+    ca_cert: rcgen::CertifiedKey<rcgen::KeyPair>,
+    client_serial: Option<rcgen::SerialNumber>,
+    client_cert: rcgen::CertifiedKey<rcgen::KeyPair>,
+    server_cert: rcgen::CertifiedKey<rcgen::KeyPair>,
 }
 
 impl TestPki {
@@ -143,7 +145,7 @@ impl TestPki {
         server_ee_params.extended_key_usages = vec![rcgen::ExtendedKeyUsagePurpose::ServerAuth];
         let ee_key = KeyPair::generate_for(alg).unwrap();
         let server_cert = server_ee_params
-            .signed_by(&ee_key, &ca_cert, &ca_key)
+            .signed_by(&ee_key, &ca_params, &ca_key)
             .unwrap();
 
         // Create a client end entity cert issued by the CA.
@@ -154,9 +156,10 @@ impl TestPki {
         client_ee_params.is_ca = rcgen::IsCa::NoCa;
         client_ee_params.extended_key_usages = vec![rcgen::ExtendedKeyUsagePurpose::ClientAuth];
         client_ee_params.serial_number = Some(rcgen::SerialNumber::from(vec![0xC0, 0xFF, 0xEE]));
+        let client_serial = client_ee_params.serial_number.clone();
         let client_key = KeyPair::generate_for(alg).unwrap();
         let client_cert = client_ee_params
-            .signed_by(&client_key, &ca_cert, &ca_key)
+            .signed_by(&client_key, &ca_params, &ca_key)
             .unwrap();
 
         // Create a root cert store that includes the CA certificate.
@@ -166,10 +169,12 @@ impl TestPki {
             .unwrap();
         Self {
             roots: roots.into(),
+            ca_params,
             ca_cert: rcgen::CertifiedKey {
                 cert: ca_cert,
                 key_pair: ca_key,
             },
+            client_serial,
             client_cert: rcgen::CertifiedKey {
                 cert: client_cert,
                 key_pair: client_key,
@@ -254,7 +259,7 @@ impl TestPki {
             key_identifier_method: rcgen::KeyIdMethod::Sha256,
         };
         crl_params
-            .signed_by(&self.ca_cert.cert, &self.ca_cert.key_pair)
+            .signed_by(&self.ca_params, &self.ca_cert.key_pair)
             .unwrap()
             .into()
     }
@@ -282,10 +287,7 @@ impl CrlUpdater {
             let revoked_certs = if revoked {
                 vec![
                     self.pki
-                        .client_cert
-                        .cert
-                        .params()
-                        .serial_number
+                        .client_serial
                         .clone()
                         .unwrap(),
                 ]
