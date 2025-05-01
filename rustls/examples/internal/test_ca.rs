@@ -41,24 +41,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Otherwise we dig out the issuer and issuer_key for the issuer, which should have
             // been produced in earlier iterations based on the careful ordering of roles.
             let cert = match role {
-                Role::TrustAnchor => role
-                    .params(alg)
-                    .self_signed(&key_pair)?,
+                Role::TrustAnchor => {
+                    // NEW: Use params directly instead of calling role.params(alg) again
+                    params.self_signed(&key_pair)?
+                }
                 Role::Intermediate => {
                     let issuer: &CertWithParams = certified_keys
                         .get(&(Role::TrustAnchor, alg.inner))
                         .unwrap();
                     // CHANGED: Use issuer.params instead of issuer.cert
-                    role.params(alg)
-                        .signed_by(&key_pair, &issuer.params, &issuer.certified_key.key_pair)?
+                    // NEW: Use params directly instead of calling role.params(alg) again
+                    params.signed_by(&key_pair, &issuer.params, &issuer.certified_key.key_pair)?
                 }
                 Role::EndEntity | Role::Client => {
                     let issuer = certified_keys
                         .get(&(Role::Intermediate, alg.inner))
                         .unwrap();
                     // CHANGED: Use issuer.params instead of issuer.cert
-                    role.params(alg)
-                        .signed_by(&key_pair, &issuer.params, &issuer.certified_key.key_pair)?
+                    // NEW: Use params directly instead of calling role.params(alg) again
+                    params.signed_by(&key_pair, &issuer.params, &issuer.certified_key.key_pair)?
                 }
             };
 
