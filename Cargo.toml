@@ -71,12 +71,14 @@ once_cell = { version = "1.16", default-features = false, features = ["alloc", "
 openssl = "0.10"
 p256 = { version = "0.13.2", default-features = false, features = ["alloc", "ecdsa", "pkcs8"] }
 pkcs8 = "0.10.2"
-pki-types = { package = "rustls-pki-types", version = "1.11", features = ["alloc","trace_drop_and_zeroize"] }
+#XXX: using 'my_fork' feature ensures the current crate uses the dep from the fork and allows that fork to control any extra features like tracing.
+pki-types = { package = "rustls-pki-types", version = "1.11", features = ["alloc","my_fork"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 rayon = "1.7"
 rcgen = { version = "0.14", features = ["pem", "aws_lc_rs"], default-features = false }
 regex = "1"
-ring = { version= "0.17", features = ["alloc","trace_drop_and_zeroize"] }
+#XXX: using 'my_fork' feature ensures the current crate uses the dep from the fork and allows that fork to control any extra features like tracing.
+ring = { version= "0.17", features = ["alloc","my_fork"] }
 rsa = { version = "0.9", features = ["sha2"], default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
