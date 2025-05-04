@@ -99,6 +99,17 @@ zlib-rs = "0.5"
 codegen-units = 1
 lto = true
 
+[profile.dev]
+opt-level = 0
+debug = 1
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256
+rpath = false
+
 [patch.crates-io]
 rustls-pki-types = { path = "/home/user/SOURCE/github/modified_forks/pki-types" } #patched with ./zeroize_on_drop.patch
 #XXX: if you're not me, you'll want this instead (or clone this locally in a path and change the path above to reflect where u've cloned it):
